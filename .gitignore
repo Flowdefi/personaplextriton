@@ -122,6 +122,7 @@ celerybeat.pid
 
 # Environments
 .env
+.dev.vars
 .venv
 env/
 venv/
@@ -177,6 +178,8 @@ pkg
 log.*
 laurent/cuda-test/check
 client/node_modules
+node_modules/
+.wrangler/
 timings.json
 mlx-trace.json
 
