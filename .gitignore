@@ -180,6 +180,7 @@ laurent/cuda-test/check
 client/node_modules
 node_modules/
 .wrangler/
+.playwright-mcp/
 timings.json
 mlx-trace.json
 
