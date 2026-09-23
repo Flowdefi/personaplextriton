@@ -112,7 +112,7 @@ To use another female voice Twilio already has, change `TTS_PROVIDER` and `FEMAL
 
 Secrets go in `.dev.vars` locally (see `.dev.vars.example`) or `npx wrangler secret put`. Never commit them.
 
-Resend's onboarding sender can only deliver to the Resend account owner's inbox until a domain is verified. Until `RESEND_API_KEY` and `RESEND_FROM` are both set, leads are stored in KV for 30 days and email is reported as skipped. `POST /leads/retry` with the test token sends a stored lead again. KV writes are not a perfect lock; the public lead route is also limited to 8 requests per IP each 10 minutes so it cannot be used as an open mail relay. The recipient is fixed.
+Resend's onboarding sender can only deliver to the Resend account owner's inbox until a domain is verified. Until `RESEND_API_KEY` and `RESEND_FROM` are both set, leads are stored in KV for 30 days and email is reported as skipped. `POST /leads/retry` with the test token sends a stored lead again. KV writes are not a perfect lock. The public lead route is limited to 8 requests per IP each 10 minutes so it cannot be used as an open mail relay. Dialogue turns are limited to 40 per IP each 10 minutes. The recipient is fixed.
 
 ## Which model speaks and which model thinks
 

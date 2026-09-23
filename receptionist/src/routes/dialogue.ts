@@ -6,7 +6,7 @@ export async function handleDialogue(request: Request, env: Env, path: string): 
   if (request.method !== "POST") {
     return json({ error: "Use POST." }, 405);
   }
-  const gate = await allowRequest(env.LEADS, clientIp(request));
+  const gate = await allowRequest(env.LEADS, `dialogue:${clientIp(request)}`, 40);
   if (gate === "limit") {
     return json({ error: "Too many requests. Please wait and try again." }, 429);
   }
