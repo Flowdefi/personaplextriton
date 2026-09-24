@@ -1,0 +1,186 @@
+:root {
+  color-scheme: light;
+  --ink: #142033;
+  --muted: #5c6b7a;
+  --paper: #f4f1ea;
+  --card: #fffcf7;
+  --line: #d9d1c3;
+  --navy: #0e2744;
+  --gold: #8c6a32;
+  --good: #1f6b45;
+  --warn: #8a4b12;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.top,
+main {
+  width: min(820px, calc(100% - 2rem));
+  margin: 0 auto;
+}
+
+.top {
+  padding: 2.5rem 0 1rem;
+}
+
+.eyebrow {
+  margin: 0;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  color: var(--gold);
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+}
+
+h1 {
+  margin: 0.35rem 0 0.5rem;
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  font-weight: 500;
+  color: var(--navy);
+}
+
+.lede,
+.note,
+.panel p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+main {
+  display: grid;
+  gap: 1rem;
+  padding-bottom: 3rem;
+}
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 1.1rem 1.2rem 1.3rem;
+}
+
+h2 {
+  margin: 0 0 0.4rem;
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+#status-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 0.92rem;
+}
+
+.log {
+  min-height: 220px;
+  max-height: 420px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.2rem 0 0.8rem;
+}
+
+.bubble {
+  max-width: 38rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 14px;
+  line-height: 1.45;
+}
+
+.bubble.agent {
+  background: #eef3f8;
+  border: 1px solid #d5e0ea;
+}
+
+.bubble.caller {
+  align-self: flex-end;
+  background: #f8f3e8;
+  border: 1px solid #eadfca;
+}
+
+.who {
+  display: block;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.25rem;
+}
+
+label {
+  display: block;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 0.85rem;
+  margin-bottom: 0.35rem;
+}
+
+textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.75rem;
+  font: inherit;
+  color: inherit;
+  background: white;
+  resize: vertical;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+}
+
+button {
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  border-radius: 999px;
+  border: 1px solid var(--navy);
+  background: var(--navy);
+  color: white;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+}
+
+button.secondary,
+#mic,
+#stop-speech {
+  background: transparent;
+  color: var(--navy);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.result {
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  white-space: pre-wrap;
+}
+
+.result.good {
+  color: var(--good);
+}
+
+.result.warn {
+  color: var(--warn);
+}
+
+@media (max-width: 640px) {
+  .top {
+    padding-top: 1.4rem;
+  }
+}
