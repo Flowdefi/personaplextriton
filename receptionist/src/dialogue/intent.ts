@@ -1,5 +1,5 @@
-import { assertNever } from "../assert-never";
-import type { Intent } from "./types";
+import { assertNever } from "../assert-never.ts";
+import type { Intent } from "./types.ts";
 
 const BUY =
   /\b(buy(?:ing|er|ers)?|purchase(?:s|d|ing)?|purchaser|acquire|acquisition|acquisitions)\b/i;

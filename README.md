@@ -1,6 +1,6 @@
 # PersonaPlex: Voice and Role Control for Full Duplex Conversational Speech Models
 
-Triton Financial Solutions live voice receptionist (separate Cloudflare Worker): [receptionist/README.md](receptionist/README.md). This repo does not port or own 561-254-6608. Forward that existing business line to a Twilio number you configure.
+Triton Financial Solutions live voice receptionist (local open-source stack): [receptionist/README.md](receptionist/README.md). This repo does not port or own 561-254-6608. Forward that existing business line to Asterisk.
 
 [![Weights](https://img.shields.io/badge/🤗-Weights-yellow)](https://huggingface.co/nvidia/personaplex-7b-v1)
 [![Paper](https://img.shields.io/badge/📄-Paper-blue)](https://arxiv.org/abs/2602.06053)
