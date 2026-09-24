@@ -1,5 +1,5 @@
-import { assertNever } from "../assert-never";
-import { normalizeIntent } from "./intent";
+import { assertNever } from "../assert-never.ts";
+import { normalizeIntent } from "./intent.ts";
 import {
   clipText,
   isAboutQuestion,
@@ -11,7 +11,7 @@ import {
   parseConfirm,
   parseName,
   parseSpokenEmail,
-} from "./parse";
+} from "./parse.ts";
 import {
   ABOUT_TRITON,
   ASK_ADDITION,
@@ -30,8 +30,8 @@ import {
   TAKE_MESSAGE,
   readbackLine,
   thanksLine,
-} from "./script";
-import type { DialogueState, Lead, LeadDraft, LeadSource, Step, TurnResult } from "./types";
+} from "./script.ts";
+import type { DialogueState, Lead, LeadDraft, LeadSource, Step, TurnResult } from "./types.ts";
 
 const EMPTY_DRAFT: LeadDraft = {
   name: null,

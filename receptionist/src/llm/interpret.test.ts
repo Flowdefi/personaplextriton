@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readModelAnswer } from "./interpret";
+import { readModelAnswer } from "./interpret.ts";
 
 describe("readModelAnswer", () => {
   it("reads a JSON answer and ignores surrounding text", () => {

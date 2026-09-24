@@ -1,5 +1,8 @@
-import type { Lead } from "../dialogue/types";
-import { leadHtml, leadPlainText, leadSubject } from "./format";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
+import type { Lead } from "../dialogue/types.ts";
+import { leadPlainText, leadSubject } from "./format.ts";
+import { sendSmtpMail } from "./smtp.ts";
 
 export type EmailStatus = "sent" | "skipped" | "failed";
 
@@ -16,14 +19,16 @@ interface StoredRecord extends DeliveryResult {
 }
 
 export interface MailEnv {
-  LEADS: KVNamespace;
-  LEAD_EMAIL_TO: string;
-  BUSINESS_PHONE: string;
-  RESEND_API_KEY?: string;
-  RESEND_FROM?: string;
+  leadsDir: string;
+  leadEmailTo: string;
+  businessPhone: string;
+  smtpHost: string | null;
+  smtpPort: number;
+  smtpUser: string | null;
+  smtpPassword: string | null;
+  smtpFrom: string | null;
+  smtpMode: "plain" | "starttls" | "tls";
 }
-
-const THIRTY_DAYS = 60 * 60 * 24 * 30;
 
 export async function deliverLead(
   env: MailEnv,
@@ -31,7 +36,7 @@ export async function deliverLead(
   sessionId: string | null,
 ): Promise<DeliveryResult> {
   if (sessionId) {
-    const existing = await readSessionDelivery(env.LEADS, sessionId);
+    const existing = await readSessionDelivery(env.leadsDir, sessionId);
     if (existing) {
       return existing;
     }
@@ -44,16 +49,16 @@ export async function deliverLead(
     emailDetail: "Lead stored. Email has not been attempted yet.",
     stored: false,
   };
-  const stored = await writeRecord(env.LEADS, pending, sessionId);
+  const stored = await writeRecord(env.leadsDir, pending, sessionId);
   const emailed = await sendEmail(env, lead);
   const result: DeliveryResult = { ...emailed, id, lead, stored };
-  await writeRecord(env.LEADS, result, sessionId);
+  await writeRecord(env.leadsDir, result, sessionId);
   console.log(JSON.stringify({ event: "lead_stored", leadId: id, emailStatus: result.emailStatus, stored }));
   return result;
 }
 
 export async function retryLead(env: MailEnv, id: string): Promise<DeliveryResult | null> {
-  const existing = await readRecord(env.LEADS, id);
+  const existing = await readRecord(env.leadsDir, id);
   if (!existing) {
     return null;
   }
@@ -63,68 +68,51 @@ export async function retryLead(env: MailEnv, id: string): Promise<DeliveryResul
     emailStatus: emailed.emailStatus,
     emailDetail: emailed.emailDetail,
   };
-  await writeRecord(env.LEADS, result, null);
+  await writeRecord(env.leadsDir, result, null);
   console.log(JSON.stringify({ event: "lead_retry", leadId: id, emailStatus: result.emailStatus }));
   return result;
 }
 
 async function sendEmail(env: MailEnv, lead: Lead): Promise<Pick<DeliveryResult, "emailStatus" | "emailDetail">> {
-  const apiKey = env.RESEND_API_KEY?.trim();
-  const from = env.RESEND_FROM?.trim();
-  if (!apiKey) {
+  const to = env.leadEmailTo.trim();
+  if (!env.smtpHost || !env.smtpFrom) {
     return {
       emailStatus: "skipped",
-      emailDetail: "RESEND_API_KEY is not set. The lead was stored and email was skipped.",
+      emailDetail: "SMTP_HOST or SMTP_FROM is not set. The lead file was written and email was skipped.",
     };
   }
-  if (!from) {
-    return {
-      emailStatus: "skipped",
-      emailDetail: "RESEND_FROM is not set. The lead was stored and email was skipped.",
-    };
-  }
-  const to = env.LEAD_EMAIL_TO.trim();
   try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from,
-        to: [to],
-        subject: leadSubject(lead),
-        html: leadHtml(lead, env.BUSINESS_PHONE),
-        text: leadPlainText(lead, env.BUSINESS_PHONE),
-      }),
+    await sendSmtpMail({
+      host: env.smtpHost,
+      port: env.smtpPort,
+      mode: env.smtpMode,
+      user: env.smtpUser,
+      password: env.smtpPassword,
+      from: env.smtpFrom,
+      to,
+      subject: leadSubject(lead),
+      text: leadPlainText(lead, env.businessPhone),
     });
-    if (!response.ok) {
-      console.error(JSON.stringify({ event: "email_failed", status: response.status }));
-      return {
-        emailStatus: "failed",
-        emailDetail: `Resend returned HTTP ${response.status}. The lead was stored and can be retried.`,
-      };
-    }
     return {
       emailStatus: "sent",
       emailDetail: `Email sent to ${to}.`,
     };
   } catch {
-    console.error(JSON.stringify({ event: "email_failed", status: "network" }));
+    console.error(JSON.stringify({ event: "email_failed" }));
     return {
       emailStatus: "failed",
-      emailDetail: "Email request failed. The lead was stored and can be retried.",
+      emailDetail: "SMTP send failed. The lead file was kept and can be retried.",
     };
   }
 }
 
-async function writeRecord(kv: KVNamespace, result: DeliveryResult, sessionId: string | null): Promise<boolean> {
+async function writeRecord(dir: string, result: DeliveryResult, sessionId: string | null): Promise<boolean> {
   const record: StoredRecord = { ...result, createdAt: new Date().toISOString() };
   try {
-    await kv.put(`lead:${result.id}`, JSON.stringify(record), { expirationTtl: THIRTY_DAYS });
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, `${result.id}.json`), JSON.stringify(record), "utf8");
     if (sessionId) {
-      await kv.put(`session:${sessionId}`, result.id, { expirationTtl: THIRTY_DAYS });
+      await writeFile(path.join(dir, `session-${safeId(sessionId)}`), result.id, "utf8");
     }
     return true;
   } catch {
@@ -133,17 +121,23 @@ async function writeRecord(kv: KVNamespace, result: DeliveryResult, sessionId: s
   }
 }
 
-async function readSessionDelivery(kv: KVNamespace, sessionId: string): Promise<DeliveryResult | null> {
-  const id = await kv.get(`session:${sessionId}`);
-  if (!id) {
+async function readSessionDelivery(dir: string, sessionId: string): Promise<DeliveryResult | null> {
+  try {
+    const id = (await readFile(path.join(dir, `session-${safeId(sessionId)}`), "utf8")).trim();
+    return readRecord(dir, id);
+  } catch {
     return null;
   }
-  return readRecord(kv, id);
 }
 
-async function readRecord(kv: KVNamespace, id: string): Promise<DeliveryResult | null> {
-  const raw = await kv.get(`lead:${id}`);
-  if (!raw) {
+async function readRecord(dir: string, id: string): Promise<DeliveryResult | null> {
+  if (!isSafeId(id)) {
+    return null;
+  }
+  let raw: string;
+  try {
+    raw = await readFile(path.join(dir, `${id}.json`), "utf8");
+  } catch {
     return null;
   }
   let parsed: unknown;
@@ -166,4 +160,12 @@ async function readRecord(kv: KVNamespace, id: string): Promise<DeliveryResult |
     emailDetail: record.emailDetail,
     stored: true,
   };
+}
+
+function safeId(value: string): string {
+  return value.replace(/[^a-zA-Z0-9-]/g, "");
+}
+
+function isSafeId(value: string): boolean {
+  return /^[0-9a-f-]{36}$/i.test(value);
 }

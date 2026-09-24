@@ -1,5 +1,5 @@
-import { assertNever } from "../assert-never";
-import type { Intent, Lead, TranscriptTurn } from "../dialogue/types";
+import { assertNever } from "../assert-never.ts";
+import type { Intent, Lead, TranscriptTurn } from "../dialogue/types.ts";
 
 export function escapeHtml(value: string): string {
   return value

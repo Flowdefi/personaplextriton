@@ -1,22 +1,23 @@
-const WINDOW_SECONDS = 600;
+const WINDOW_MS = 600_000;
 
-export async function allowRequest(
-  kv: KVNamespace,
-  bucket: string,
-  limit: number,
-): Promise<"allow" | "limit" | "error"> {
-  const key = `rl:${bucket}`;
-  try {
-    const current = await kv.get(key);
-    const count = current ? Number(current) : 0;
-    const next = Number.isFinite(count) ? count : 0;
-    if (next >= limit) {
+interface Bucket {
+  count: number;
+  resetAt: number;
+}
+
+export class RateLimiter {
+  private readonly buckets = new Map<string, Bucket>();
+
+  allow(bucket: string, limit: number, now = Date.now()): "allow" | "limit" {
+    const current = this.buckets.get(bucket);
+    if (!current || current.resetAt <= now) {
+      this.buckets.set(bucket, { count: 1, resetAt: now + WINDOW_MS });
+      return "allow";
+    }
+    if (current.count >= limit) {
       return "limit";
     }
-    await kv.put(key, String(next + 1), { expirationTtl: WINDOW_SECONDS });
+    current.count += 1;
     return "allow";
-  } catch {
-    console.error(JSON.stringify({ event: "rate_limit_failed" }));
-    return "error";
   }
 }

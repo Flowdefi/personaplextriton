@@ -9,16 +9,6 @@ export function json(data: unknown, status = 200): Response {
   });
 }
 
-export function xml(body: string): Response {
-  return new Response(body, {
-    status: 200,
-    headers: {
-      "content-type": "text/xml; charset=utf-8",
-      "cache-control": "no-store",
-    },
-  });
-}
-
 export async function readJson(request: Request, maxBytes = 32_000): Promise<unknown | Response> {
   const length = request.headers.get("content-length");
   if (length && Number(length) > maxBytes) {

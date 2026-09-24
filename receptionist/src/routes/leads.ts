@@ -1,28 +1,26 @@
-import { GREETING } from "../dialogue/script";
-import type { Lead } from "../dialogue/types";
-import { clientIp, isResponse, json, readJson } from "../http";
-import { allowRequest } from "../leads/rate-limit";
-import { deliverLead, retryLead } from "../leads/send";
-import { validateLeadPayload } from "../leads/validate";
-import { isUuid, sessionStub } from "../runtime";
-import { timingSafeEqualString } from "../security/timing";
+import type { AppContext } from "../app-context.ts";
+import { mailEnv } from "../app-context.ts";
+import { GREETING } from "../dialogue/script.ts";
+import type { Lead } from "../dialogue/types.ts";
+import { clientIp, isResponse, json, readJson } from "../http.ts";
+import { deliverLead, retryLead } from "../leads/send.ts";
+import { validateLeadPayload } from "../leads/validate.ts";
+import { isUuid } from "../runtime.ts";
+import { timingSafeEqualString } from "../security/timing.ts";
 
-export async function handleLeads(request: Request, env: Env): Promise<Response> {
+export async function handleLeads(request: Request, ctx: AppContext): Promise<Response> {
   if (request.method !== "POST") {
     return json({ error: "Use POST." }, 405);
   }
-  const gate = await allowRequest(env.LEADS, `lead:${clientIp(request)}`, 8);
+  const gate = ctx.rates.allow(`lead:${clientIp(request)}`, 8);
   if (gate === "limit") {
     return json({ error: "Too many requests. Please wait and try again." }, 429);
-  }
-  if (gate === "error") {
-    return json({ error: "Lead storage is unavailable." }, 503);
   }
   const body = await readJson(request);
   if (isResponse(body)) {
     return body;
   }
-  const sessionLead = await leadFromSession(env, body);
+  const sessionLead = leadFromSession(ctx, body);
   if (sessionLead instanceof Response) {
     return sessionLead;
   }
@@ -31,7 +29,7 @@ export async function handleLeads(request: Request, env: Env): Promise<Response>
     return json({ error: validated.error }, 400);
   }
   const sessionId = readSessionId(body);
-  const result = await deliverLead(env, validated.lead, sessionId);
+  const result = await deliverLead(mailEnv(ctx.config), validated.lead, sessionId);
   return json({
     ok: true,
     id: result.id,
@@ -42,11 +40,11 @@ export async function handleLeads(request: Request, env: Env): Promise<Response>
   });
 }
 
-export async function handleLeadTest(request: Request, env: Env): Promise<Response> {
+export async function handleLeadTest(request: Request, ctx: AppContext): Promise<Response> {
   if (request.method !== "POST") {
     return json({ error: "Use POST." }, 405);
   }
-  const denied = authorizeTest(request, env);
+  const denied = authorizeTest(request, ctx);
   if (denied) {
     return denied;
   }
@@ -67,7 +65,7 @@ export async function handleLeadTest(request: Request, env: Env): Promise<Respon
     startedAt: now,
     completedAt: now,
   };
-  const result = await deliverLead(env, lead, `test:${crypto.randomUUID()}`);
+  const result = await deliverLead(mailEnv(ctx.config), lead, `test:${crypto.randomUUID()}`);
   return json({
     ok: true,
     id: result.id,
@@ -78,11 +76,11 @@ export async function handleLeadTest(request: Request, env: Env): Promise<Respon
   });
 }
 
-export async function handleLeadRetry(request: Request, env: Env): Promise<Response> {
+export async function handleLeadRetry(request: Request, ctx: AppContext): Promise<Response> {
   if (request.method !== "POST") {
     return json({ error: "Use POST." }, 405);
   }
-  const denied = authorizeTest(request, env);
+  const denied = authorizeTest(request, ctx);
   if (denied) {
     return denied;
   }
@@ -95,7 +93,7 @@ export async function handleLeadRetry(request: Request, env: Env): Promise<Respo
   if (!isUuid(id)) {
     return json({ error: "id must be the stored lead UUID." }, 400);
   }
-  const result = await retryLead(env, id);
+  const result = await retryLead(mailEnv(ctx.config), id);
   if (!result) {
     return json({ error: "Stored lead was not found." }, 404);
   }
@@ -109,8 +107,8 @@ export async function handleLeadRetry(request: Request, env: Env): Promise<Respo
   });
 }
 
-function authorizeTest(request: Request, env: Env): Response | null {
-  const expected = env.TEST_TOKEN?.trim();
+function authorizeTest(request: Request, ctx: AppContext): Response | null {
+  const expected = ctx.config.testToken;
   if (!expected) {
     return json({ error: "Test endpoint disabled." }, 404);
   }
@@ -122,7 +120,7 @@ function authorizeTest(request: Request, env: Env): Response | null {
   return null;
 }
 
-async function leadFromSession(env: Env, body: unknown): Promise<{ ok: true; lead: Lead } | null | Response> {
+function leadFromSession(ctx: AppContext, body: unknown): { ok: true; lead: Lead } | null | Response {
   if (typeof body !== "object" || body === null || !("sessionId" in body)) {
     return null;
   }
@@ -133,20 +131,14 @@ async function leadFromSession(env: Env, body: unknown): Promise<{ ok: true; lea
   if ("name" in body && typeof body.name === "string") {
     return null;
   }
-  const response = await sessionStub(env, `browser:${sessionId}`).fetch("https://session/state");
-  const payload = (await response.json()) as { state?: { step?: string } | null };
-  const state = payload.state;
+  const state = ctx.sessions.get(sessionId);
   if (!state) {
     return json({ error: "Session was not found." }, 404);
   }
   if (state.step !== "completed") {
     return json({ error: "The conversation is not finished yet." }, 409);
   }
-  const record = state as unknown;
-  if (typeof record !== "object" || record === null) {
-    return json({ error: "Session was not found." }, 404);
-  }
-  const rebuilt = validateLeadPayload(leadWire(record), Date.now());
+  const rebuilt = validateLeadPayload(leadWire(state), Date.now());
   if (!rebuilt.ok) {
     return json({ error: rebuilt.error }, 409);
   }

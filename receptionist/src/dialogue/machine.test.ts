@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { normalizeIntent } from "./intent";
-import { applyCallerUtterance, createSession, openingLine } from "./machine";
-import { isEmail, parseSpokenEmail } from "./parse";
-import { GREETING, TAKE_MESSAGE } from "./script";
-import type { DialogueState, Lead } from "./types";
+import { normalizeIntent } from "./intent.ts";
+import { applyCallerUtterance, createSession, openingLine } from "./machine.ts";
+import { isEmail, parseSpokenEmail } from "./parse.ts";
+import { GREETING, TAKE_MESSAGE } from "./script.ts";
+import type { DialogueState, Lead } from "./types.ts";
 
 const NOW = Date.parse("2026-01-15T15:00:00.000Z");
 

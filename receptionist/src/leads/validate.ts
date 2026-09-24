@@ -1,6 +1,6 @@
-import { isEmail } from "../dialogue/parse";
-import type { Intent, Lead, LeadSource, TranscriptTurn } from "../dialogue/types";
-import { intentIsKnown } from "./format";
+import { isEmail } from "../dialogue/parse.ts";
+import type { Intent, Lead, LeadSource, TranscriptTurn } from "../dialogue/types.ts";
+import { intentIsKnown } from "./format.ts";
 
 const SOURCES = new Set<LeadSource>(["pstn", "browser", "test"]);
 

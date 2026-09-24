@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { Lead } from "../dialogue/types";
-import { escapeHtml, formatNewYork, leadHtml, leadSubject, stripHeader } from "./format";
+import type { Lead } from "../dialogue/types.ts";
+import { escapeHtml, formatNewYork, leadHtml, leadSubject, stripHeader } from "./format.ts";
 
 const lead: Lead = {
   name: "Jane <script>",
