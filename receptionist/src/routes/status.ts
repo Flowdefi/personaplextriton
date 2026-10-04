@@ -11,6 +11,8 @@ export function handleStatus(ctx: AppContext): Response {
   });
   const smtpReady = Boolean(ctx.config.smtpHost && ctx.config.smtpFrom);
   return json({
+    agentMode: ctx.config.agentMode,
+    testPhoneNumber: ctx.config.testPhoneNumber,
     business: ctx.config.businessName,
     businessPhone: ctx.config.businessPhone,
     site: ctx.config.businessSite,

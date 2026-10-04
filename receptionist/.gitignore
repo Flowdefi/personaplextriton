@@ -6,3 +6,4 @@ node_modules/
 worker-configuration.d.ts
 leads/*.json
 leads/session-*
+models/

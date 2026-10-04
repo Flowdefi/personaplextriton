@@ -60,8 +60,10 @@ async function loadStatus() {
   statusSummary.textContent = payload.model?.note ?? "Scripted receptionist.";
   statusList.replaceChildren();
   const rows = [
-    ["Model", payload.model?.provider ?? "scripted"],
+    ["Mode", payload.agentMode ?? "debtor_assist"],
+    ["Model", payload.model?.model ?? payload.model?.provider ?? "scripted"],
     ["Voice", `${payload.voice?.engine ?? ""} ${payload.voice?.voice ?? ""}`.trim()],
+    ["Test PSTN", payload.testPhoneNumber ?? "Not set — see docs/TEST_PHONE.md"],
     ["Lead email", payload.leadEmailTo ?? ""],
     ["Business line", payload.businessPhone ?? ""],
   ];

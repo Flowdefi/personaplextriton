@@ -1,4 +1,8 @@
+export type AgentMode = "debtor_assist" | "lead_capture";
+
 export interface AppConfig {
+  agentMode: AgentMode;
+  testPhoneNumber: string | null;
   leadEmailTo: string;
   businessPhone: string;
   businessName: string;
@@ -30,7 +34,11 @@ function filled(value: string | undefined): string | null {
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const mode = filled(env.SMTP_MODE) ?? "starttls";
   const smtpMode = mode === "plain" || mode === "tls" || mode === "starttls" ? mode : "starttls";
+  const modeRaw = filled(env.AGENT_MODE) ?? "debtor_assist";
+  const agentMode: AgentMode = modeRaw === "lead_capture" ? "lead_capture" : "debtor_assist";
   return {
+    agentMode,
+    testPhoneNumber: filled(env.TEST_PHONE_NUMBER),
     leadEmailTo: filled(env.LEAD_EMAIL_TO) ?? "portfolios@debtmarket.net",
     businessPhone: filled(env.BUSINESS_PHONE) ?? "561-254-6608",
     businessName: filled(env.BUSINESS_NAME) ?? "Triton Financial Solutions, LLC",
@@ -38,7 +46,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     leadsDir: filled(env.LEADS_DIR) ?? "leads",
     testToken: filled(env.TEST_TOKEN),
     ollamaBaseUrl: (filled(env.OLLAMA_BASE_URL) ?? "http://127.0.0.1:11434").replace(/\/$/, ""),
-    ollamaModel: filled(env.OLLAMA_MODEL) ?? "Qwen3.8-27B-Uncensored",
+    ollamaModel: filled(env.OLLAMA_MODEL) ?? "qwen2.5:14b-instruct",
     ollamaEnabled: filled(env.OLLAMA_DISABLED) !== "1",
     smtpHost: filled(env.SMTP_HOST),
     smtpPort: Number(filled(env.SMTP_PORT) ?? (smtpMode === "tls" ? "465" : "587")),

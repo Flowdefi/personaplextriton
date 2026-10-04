@@ -1,7 +1,8 @@
 import type { AppContext } from "../app-context.ts";
 import { mailEnv } from "../app-context.ts";
 import { GREETING } from "../dialogue/script.ts";
-import type { Lead } from "../dialogue/types.ts";
+import type { DialogueState, Lead } from "../dialogue/types.ts";
+import type { ConversationState } from "../llm/converse.ts";
 import { clientIp, isResponse, json, readJson } from "../http.ts";
 import { deliverLead, retryLead } from "../leads/send.ts";
 import { validateLeadPayload } from "../leads/validate.ts";
@@ -135,7 +136,7 @@ function leadFromSession(ctx: AppContext, body: unknown): { ok: true; lead: Lead
   if (!state) {
     return json({ error: "Session was not found." }, 404);
   }
-  if (state.step !== "completed") {
+  if (!sessionIsComplete(state)) {
     return json({ error: "The conversation is not finished yet." }, 409);
   }
   const rebuilt = validateLeadPayload(leadWire(state), Date.now());
@@ -145,11 +146,36 @@ function leadFromSession(ctx: AppContext, body: unknown): { ok: true; lead: Lead
   return rebuilt;
 }
 
-function leadWire(state: object): unknown {
+function sessionIsComplete(state: DialogueState | ConversationState): boolean {
+  if ("step" in state) {
+    return state.step === "completed";
+  }
+  return false;
+}
+
+function leadWire(state: DialogueState | ConversationState): unknown {
+  if ("summary" in state) {
+    const summary = state.summary;
+    const issue = summary.issueType ? `Issue: ${summary.issueType}.` : "";
+    const offer = summary.resolutionOffered ? ` Offered: ${summary.resolutionOffered}` : "";
+    return {
+      name: summary.callerName,
+      company: null,
+      intent: summary.intent ?? "collect",
+      email: summary.email,
+      callerPhone: state.callerPhone,
+      source: state.source,
+      need: summary.need,
+      addition: `${issue}${offer}`.trim() || null,
+      transcript: state.transcript,
+      startedAt: state.startedAt,
+      completedAt: Date.now(),
+    };
+  }
   if (!("draft" in state) || typeof state.draft !== "object" || state.draft === null) {
     return {};
   }
-  const draft = state.draft as Record<string, unknown>;
+  const draft = state.draft;
   return {
     name: draft.name,
     company: draft.companyDeclined === true ? null : draft.company,

@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --experimental-strip-types src/serve.ts",
+    "dev": "node --env-file=.env --experimental-strip-types src/serve.ts",
+    "setup": "bash bin/setup-local.sh",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
