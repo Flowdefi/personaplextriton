@@ -6,6 +6,7 @@ import { Readable } from "node:stream";
 import { createAppContext, type AppContext } from "./app-context.ts";
 import { loadConfig } from "./config.ts";
 import { json } from "./http.ts";
+import { handleCollections } from "./routes/collections.ts";
 import { handleDialogue } from "./routes/dialogue.ts";
 import { handleLeadRetry, handleLeadTest, handleLeads } from "./routes/leads.ts";
 import { handleStatus } from "./routes/status.ts";
@@ -67,6 +68,9 @@ export async function route(ctx: AppContext, request: Request): Promise<Response
     }
     if (pathName === "/leads/retry") {
       return await handleLeadRetry(request, ctx);
+    }
+    if (pathName === "/collections/outreach" || pathName === "/collections/accounts" || pathName.startsWith("/collections/accounts/")) {
+      return await handleCollections(request, ctx, pathName);
     }
     if (pathName === "/voice/speak") {
       return await handleSpeak(request, ctx);
