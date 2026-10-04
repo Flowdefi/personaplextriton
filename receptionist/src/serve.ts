@@ -9,6 +9,7 @@ import { json } from "./http.ts";
 import { handleDialogue } from "./routes/dialogue.ts";
 import { handleLeadRetry, handleLeadTest, handleLeads } from "./routes/leads.ts";
 import { handleStatus } from "./routes/status.ts";
+import { handleSinchEvent, handleSinchIncoming, handleSinchSpeak } from "./routes/sinch.ts";
 import { isUuid } from "./runtime.ts";
 import { synthesize, transcribe } from "./voice/local.ts";
 
@@ -73,6 +74,15 @@ export async function route(ctx: AppContext, request: Request): Promise<Response
     }
     if (pathName === "/voice/utterance") {
       return await handleUtterance(request, ctx);
+    }
+    if (pathName === "/voice/sinch/incoming") {
+      return await handleSinchIncoming(request, ctx);
+    }
+    if (pathName === "/voice/sinch/event") {
+      return await handleSinchEvent(request, ctx);
+    }
+    if (pathName === "/voice/sinch/speak") {
+      return await handleSinchSpeak(request, ctx);
     }
     if (request.method === "GET" || request.method === "HEAD") {
       return await serveStatic(pathName);

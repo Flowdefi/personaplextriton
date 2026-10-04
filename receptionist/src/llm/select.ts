@@ -16,7 +16,7 @@ export type ModelChoice =
       note: string;
     };
 
-const DEFAULT_OLLAMA = "Qwen3.8-27B-Uncensored";
+const DEFAULT_OLLAMA = "qwen2.5:14b-instruct";
 
 function filled(value: string | undefined): string | undefined {
   const trimmed = value?.trim();
@@ -31,7 +31,7 @@ export function selectModel(config: ModelConfig): ModelChoice {
       provider: "ollama",
       model,
       preferred: true,
-      note: `Ollama model ${model} interprets unclear caller speech. espeak-ng or Piper speaks the script in a female voice. Clear answers never call the model.`,
+      note: `Ollama ${model} drives natural debtor-assist dialogue (empathy, disputes, repayment options). Piper or espeak-ng speaks replies.`,
     };
   }
   return {

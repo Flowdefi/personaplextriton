@@ -6,7 +6,7 @@ describe("selectModel", () => {
     const choice = selectModel({ ollamaEnabled: true });
     expect(choice.provider).toBe("ollama");
     if (choice.provider === "ollama") {
-      expect(choice.model).toBe("Qwen3.8-27B-Uncensored");
+      expect(choice.model).toBe("qwen2.5:14b-instruct");
       expect(choice.preferred).toBe(true);
     }
   });
