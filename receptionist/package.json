@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --env-file=.env --experimental-strip-types src/serve.ts",
+    "dev": "if [ -f .env ]; then exec node --env-file=.env --experimental-strip-types src/serve.ts; else exec node --experimental-strip-types src/serve.ts; fi",
     "setup": "bash bin/setup-local.sh",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
