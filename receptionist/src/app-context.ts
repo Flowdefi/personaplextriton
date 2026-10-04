@@ -1,3 +1,4 @@
+import { AccountBook } from "./collections/store.ts";
 import type { AppConfig } from "./config.ts";
 import { applyCallerUtterance, createSession, heuristicAccepts, openingLine } from "./dialogue/machine.ts";
 import type { DialogueState, Lead, LeadSource } from "./dialogue/types.ts";
@@ -148,6 +149,7 @@ export interface AppContext {
   config: AppConfig;
   sessions: SessionBook;
   rates: RateLimiter;
+  accounts: AccountBook;
 }
 
 export function createAppContext(config: AppConfig): AppContext {
@@ -155,6 +157,7 @@ export function createAppContext(config: AppConfig): AppContext {
     config,
     sessions: new SessionBook(config),
     rates: new RateLimiter(),
+    accounts: new AccountBook(),
   };
 }
 
