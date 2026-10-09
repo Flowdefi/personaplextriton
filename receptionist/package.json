@@ -1,0 +1,16 @@
+{
+  "name": "triton-voice-receptionist",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file=.env --experimental-strip-types src/serve.ts",
+    "setup": "bash bin/setup-local.sh",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}
